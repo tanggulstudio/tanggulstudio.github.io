@@ -658,6 +658,7 @@ canvas.lobby-cv { touch-action: none; }
 .hd-stage .hd-pow { bottom: 54px; }
 
 .hd-reset.art { right: auto; left: 10px; }
+.hd-reset.d3 { right: auto; left: 10px; bottom: 54px; }
 .hd-note { position: absolute; left: 10px; bottom: 54px; font: 700 10.5px system-ui; color: #ffe7a8; background: rgba(0,0,0,.45); padding: 2px 6px; border-radius: 6px; }
 
 @media (max-height: 480px) { .cutin { height: 64px; top: 22%; } .ci-band canvas { width: 90px; height: 90px; } .ci-txt { left: calc(12% + 96px); } .ci-txt b { font-size: 22px; } }
@@ -848,7 +849,7 @@ button.rt-row:hover { background: rgba(139,92,246,.25); }
   </div>
   <div id="modal"><div class="sheet" id="sheet"></div></div>
   <div id="toasts"></div>
-  <script>window.G = window.G || {}; G.ART_FILES = ["arin_bust","arin_full","aurelia_angry","aurelia_b_atk1","aurelia_b_atk2","aurelia_b_idle1","aurelia_b_idle2","aurelia_b_skill","aurelia_back","aurelia_blink","aurelia_bust","aurelia_full","aurelia_low","aurelia_q","aurelia_qback","aurelia_sad","aurelia_shy","aurelia_side","aurelia_smile","aurelia_surprise","aurelia_top","dona_bust","dona_full","elysia_bust","elysia_full","haru_bust","haru_full","karen_bust","karen_full","kohaku_bust","kohaku_full","lian_bust","lian_full","lilith_bust","lilith_full","miyu_bust","miyu_full","momo_bust","momo_full","nari_bust","nari_full","neon_bust","neon_full","prim_bust","prim_full","reina_bust","reina_full","selene_bust","selene_full","seraphine_bust","seraphine_full","sophie_bust","sophie_full","vera_bust","vera_full","yuna_bust","yuna_full"];</script>
+  <script>window.G = window.G || {}; G.ART_FILES = ["arin_bust","arin_full","aurelia_angry","aurelia_b_atk1","aurelia_b_atk2","aurelia_b_idle1","aurelia_b_idle2","aurelia_b_skill","aurelia_back","aurelia_blink","aurelia_bust","aurelia_full","aurelia_low","aurelia_q","aurelia_qback","aurelia_sad","aurelia_shy","aurelia_side","aurelia_smile","aurelia_surprise","aurelia_top","dona_bust","dona_full","elysia_bust","elysia_full","haru_bust","haru_full","karen_bust","karen_full","kohaku_bust","kohaku_full","lian_bust","lian_full","lilith_bust","lilith_full","miyu_bust","miyu_full","momo_bust","momo_full","nari_bust","nari_full","neon_bust","neon_full","prim_bust","prim_full","reina_bust","reina_full","selene_bust","selene_full","seraphine_bust","seraphine_full","sophie_bust","sophie_full","vera_bust","vera_full","yuna_bust","yuna_full"]; G.MODEL_FILES = [];</script>
   <script>
 // ===== 게임 데이터 정의 =====
 window.G = window.G || {};
@@ -2496,7 +2497,7 @@ window.G = window.G || {};
   // view.yaw: 돌려보기 각도 — 가장 가까운 두 각도 그림을 부드럽게 섞고, 남은 각도만큼 살짝 입체로 기울여요
   // view.pitch: +면 위에서(top 그림), -면 아래에서(low 그림)
   R.ILLUST_LIMIT = 1.15; // 옆·뒤 그림이 없으면 이보다 많이 돌릴 때 SD로 넘어감
-  R.hasViews = id => { const a = G.ART[id], v = a && a.views; return !!(v && v.side && v.back); };
+  R.hasViews = id => { if (G.M3 && G.M3.ready(id)) return true; const a = G.ART[id], v = a && a.views; return !!(v && v.side && v.back); };
   const sstep = x => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
   const EX_MAP = { smile: 'smile', wink: 'smile', shy: 'shy', angry: 'angry', surprise: 'surprise', sad: 'sad' };
   function strip(c, img, yaw, k, pitch, alpha) { // 세로 띠로 나눠 원근 회전
@@ -2518,6 +2519,7 @@ window.G = window.G || {};
     c.globalAlpha = 1;
   }
   R.illust = function (c, hero, x, y, hgt, t, bump, view, opt) {
+    if (G.M3 && G.M3.ready(hero.id)) return G.M3.drawLobby(c, hero, x, y, hgt, t, bump, view, opt); // 3D 모델이 있으면 3D로
     const A = G.ART[hero.id]; opt = opt || {};
     R.ensureArt(hero.id, 'views'); R.ensureArt(hero.id, 'ex');
     const V = A.views || {}, E = A.ex || {};
@@ -2552,10 +2554,11 @@ window.G = window.G || {};
   };
 
   // ---------- 전투 동작 그림 ----------
-  R.hasBattleArt = (hero, costume) => { const a = R.artFor(hero, costume); if (!a) return false; R.ensureArt(hero.id, 'bt'); return !!(a.bt && a.bt.b_idle1); };
+  R.hasBattleArt = (hero, costume) => { if (G.M3 && G.M3.ready(hero.id)) return true; const a = R.artFor(hero, costume); if (!a) return false; R.ensureArt(hero.id, 'bt'); return !!(a.bt && a.bt.b_idle1); };
   const BT_FALL = { b_idle2: 'b_idle1', b_atk1: 'b_idle1', b_atk2: 'b_atk1', b_skill: 'b_atk2', b_hit: 'b_idle1', b_down: 'b_hit' };
   // u: 전투 유닛 (anim·hit·castT·dying·walk 사용), 오른쪽을 보는 그림 기준. dir=-1이면 왼쪽을 보게 반전
   R.battleSprite = function (c, hero, x, y, hgt, u, t, dir) {
+    if (G.M3 && G.M3.ready(hero.id)) return G.M3.drawBattle(c, hero, x, y, hgt, u, t, dir);
     const Bt = G.ART[hero.id].bt, now = performance.now();
     let key = u.dead ? 'b_down' : u.hit > .45 ? 'b_hit' : u.castT > 0 ? 'b_skill' : u.anim > .72 ? 'b_atk1' : u.anim > .15 ? 'b_atk2' : 'b_idle';
     const get = kk => { while (kk && !Bt[kk]) kk = BT_FALL[kk]; return kk && Bt[kk]; };
@@ -2972,6 +2975,212 @@ window.G = window.G || {};
       c.beginPath(); c.arc(px + Math.sin(t + i) * 8, py, th === 'ice' ? 1.8 : 2.2, 0, 7); c.fill();
     }
     c.globalAlpha = 1;
+  };
+})(window.G);
+</script>
+  <script>
+// ===== 3D 모델 (GLB) =====
+// models/{영웅}.glb 가 있으면 그 영웅은 3D로 나와요. 없으면 지금처럼 그림.
+//  - 마을/영웅 화면: 360° 회전, 위·아래에서 보기, 숨쉬기, 터치하면 반응 동작
+//  - 전투: 대기·걷기·공격·스킬·피격·쓰러짐 (모델 안의 애니메이션 이름으로 찾아요)
+//  - 같은 뼈대의 동작 파일을 따로 줘도 돼요: models/{영웅}_attack.glb, _idle, _walk, _skill, _hit, _die, _greet
+// three.js는 3D 모델이 있는 영웅을 처음 볼 때만 불러와요 (vendor/).
+(function (G) {
+  const M = G.M3 = {};
+  const files = () => G.MODEL_FILES || [];
+  M.has = id => G.S && G.S.view3d !== false && files().includes(id);
+  let lib = null, libP = null, rend = null, failed = false;
+  const models = {};        // id -> { st: 'loading'|'ready'|'error', scene, clips, h, morph }
+  const insts = new WeakMap(); // 그리는 대상(전투 유닛 등) -> 인스턴스
+  const named = {};          // 'lobby:aurelia' 같은 이름 -> 인스턴스
+
+  // 애니메이션 이름 → 역할
+  const ROLE = [
+    ['die', /die|death|dead|down|defeat|fall|knock/i],
+    ['hit', /hit|damage|hurt|react|impact|flinch/i],
+    ['skill', /skill|cast|spell|magic|special|power|charge|ultimate/i],
+    ['attack', /attack|slash|strike|punch|kick|sword|swing|combo|shoot|stab/i],
+    ['walk', /walk|run|jog|move|step/i],
+    ['greet', /greet|wave|hello|bow|dance|happy|cheer|clap|jump/i],
+    ['idle', /idle|stand|breath|wait|pose|loop/i],
+  ];
+  const roleOf = n => { for (const [r, re] of ROLE) if (re.test(n)) return r; return null; };
+
+  function loadLib() {
+    if (libP) return libP;
+    const base = new URL('vendor/three3d.js', document.baseURI).href;
+    libP = import(base).then(m => {
+      lib = m;
+      const T = m.THREE, cv = document.createElement('canvas');
+      const r = new T.WebGLRenderer({ canvas: cv, alpha: true, antialias: true, premultipliedAlpha: true });
+      r.outputColorSpace = T.SRGBColorSpace; r.setClearColor(0x000000, 0); r.setPixelRatio(1);
+      const scene = new T.Scene();
+      scene.add(new T.HemisphereLight(0xffffff, 0xb8a8c8, 1.6));
+      const key = new T.DirectionalLight(0xffffff, 1.8); key.position.set(.6, 1.4, 2); scene.add(key);
+      const rim = new T.DirectionalLight(0xffe8f4, 1.1); rim.position.set(-1.2, .8, -1.6); scene.add(rim);
+      const cam = new T.PerspectiveCamera(15, 1, .1, 50);
+      rend = { r, cv, scene, cam, w: 0, h: 0 };
+    }).catch(e => { console.warn('[3d] three.js 불러오기 실패', e); failed = true; });
+    return libP;
+  }
+
+  function prep(id, gltf) {
+    const T = lib.THREE, root = gltf.scene;
+    root.updateMatrixWorld(true);
+    const box = new T.Box3().setFromObject(root), size = box.getSize(new T.Vector3());
+    const h = size.y || 1, s = 1 / h;
+    const holder = new T.Group(), inner = new T.Group();
+    inner.add(root); holder.add(inner);
+    root.scale.multiplyScalar(s);
+    root.position.set(-(box.min.x + size.x / 2) * s, -box.min.y * s, -(box.min.z + size.z / 2) * s);
+    const morph = [];
+    root.traverse(o => {
+      if (!o.isMesh) return;
+      o.frustumCulled = false;
+      (Array.isArray(o.material) ? o.material : [o.material]).forEach(mt => { // 환경맵이 없어서 금속 재질이 까맣게 나오지 않게
+        if (mt.metalness != null) { mt.metalness = Math.min(mt.metalness, .15); mt.roughness = Math.max(mt.roughness == null ? 1 : mt.roughness, .55); }
+        if (mt.map) mt.map.anisotropy = 4;
+      });
+      if (o.morphTargetDictionary) morph.push(o);
+    });
+    return { holder, clips: gltf.animations || [], morph };
+  }
+
+  function loadModel(id) {
+    if (models[id]) return models[id];
+    const m = models[id] = { st: 'loading' };
+    loadLib().then(() => {
+      if (failed) { m.st = 'error'; return; }
+      const ld = new lib.GLTFLoader();
+      const dr = new lib.DRACOLoader(); dr.setDecoderPath(new URL('vendor/draco/', document.baseURI).href); dr.setDecoderConfig({ type: 'wasm' });
+      ld.setDRACOLoader(dr); ld.setMeshoptDecoder(lib.MeshoptDecoder); // 압축된 모델도 읽기
+      const get = f => new Promise((res, rej) => ld.load(`models/${f}.glb`, res, undefined, rej));
+      const extra = files().filter(f => f.startsWith(id + '_'));
+      return get(id).then(gl => {
+        Object.assign(m, prep(id, gl));
+        return Promise.all(extra.map(f => get(f).then(g2 => {
+          const tag = f.slice(id.length + 1);
+          (g2.animations || []).forEach((c, i) => { c.name = (roleOf(tag) || tag) + (i ? i : '') + ':' + c.name; m.clips.push(c); });
+        }).catch(e => console.warn('[3d] 동작 파일 실패', f, e))));
+      }).then(() => {
+        m.roles = {};
+        m.clips.forEach(c => { const r = roleOf(c.name.split(':')[0]) || roleOf(c.name); if (r && !m.roles[r]) m.roles[r] = c; });
+        if (!m.roles.idle && m.clips.length === 1 && !roleOf(m.clips[0].name)) m.roles.idle = m.clips[0];
+        m.st = 'ready';
+      }).catch(e => { console.warn('[3d] 모델 불러오기 실패', id, e); m.st = 'error'; });
+    });
+    return m;
+  }
+  M.ready = id => { if (!M.has(id)) return false; const m = loadModel(id); return m.st === 'ready'; };
+  M.state = id => models[id] && models[id].st;
+
+  function makeInst(id) {
+    const m = models[id], obj = lib.SkeletonUtils.clone(m.holder);
+    const mixer = new lib.THREE.AnimationMixer(obj), acts = {};
+    for (const r in m.roles) {
+      const a = mixer.clipAction(m.roles[r]);
+      if (r === 'die' || r === 'hit' || r === 'attack' || r === 'skill' || r === 'greet') { a.setLoop(r === 'die' ? lib.THREE.LoopOnce : lib.THREE.LoopRepeat); a.clampWhenFinished = true; }
+      acts[r] = a;
+    }
+    const morph = []; obj.traverse(o => { if (o.isMesh && o.morphTargetDictionary) morph.push(o); });
+    const inner = obj.children[0];
+    return { id, obj, inner, mixer, acts, cur: null, last: performance.now(), morph };
+  }
+  function inst(key, id) {
+    let I = typeof key === 'string' ? named[key] : insts.get(key);
+    if (I && I.id === id) return I;
+    I = makeInst(id);
+    if (typeof key === 'string') named[key] = I; else insts.set(key, I);
+    return I;
+  }
+  function play(I, role, fade) {
+    const a = I.acts[role] || I.acts.idle;
+    if (!a || I.cur === a) return !!a;
+    a.reset().setEffectiveWeight(1).play();
+    if (I.cur) I.cur.crossFadeTo(a, fade == null ? .18 : fade, false);
+    I.cur = a; I.role = role;
+    return true;
+  }
+  // 표정 (모델에 표정 모양이 들어 있을 때만): blink / smile / angry / surprise / sad
+  const EXPR_KEYS = { blink: /blink|eye.?close/i, smile: /smile|joy|happy|fun/i, angry: /angry|mad/i, surprise: /surpris|shock/i, sad: /sad|sorrow|cry/i, shy: /shy|blush|smile|joy/i };
+  function face(I, expr, t) {
+    if (!I.morph.length) return;
+    const blink = ((t + I.id.length * .37) % 4.2) < .13 ? 1 : 0;
+    I.morph.forEach(o => {
+      const d = o.morphTargetDictionary, inf = o.morphTargetInfluences;
+      for (const k in d) {
+        let v;
+        if (EXPR_KEYS.blink.test(k)) v = blink || expr === 'blink' ? 1 : 0;
+        else if (expr && EXPR_KEYS[expr] && EXPR_KEYS[expr].test(k)) v = 1;
+        else if (Object.values(EXPR_KEYS).some(re => re.test(k))) v = 0;
+        else continue; // 표정과 상관없는 모양은 건드리지 않아요
+        inf[d[k]] += (v - inf[d[k]]) * .35;
+      }
+    });
+  }
+
+  // 3D를 그려서 2D 캔버스(c)에 붙이기. 발 위치 x,y / 몸 높이 hgt
+  function blit(c, I, x, y, hgt, yaw, pitch, aspect) {
+    const R = rend, T = lib.THREE;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const boxH = hgt * 1.25, boxW = boxH * aspect;
+    let ph = Math.min(1400, Math.round(boxH * dpr)), pw = Math.round(ph * aspect);
+    if (R.w < pw || R.h < ph) { R.w = Math.max(R.w, pw); R.h = Math.max(R.h, ph); R.r.setSize(R.w, R.h, false); }
+    R.r.setViewport(0, 0, pw, ph); R.r.setScissor(0, 0, pw, ph); R.r.setScissorTest(true);
+    R.r.clear();
+    I.obj.rotation.set(0, yaw, 0);
+    // 카메라: 몸 가운데를 보며 pitch만큼 위·아래로 돌기 (몸 높이 1)
+    const cam = R.cam, fovH = 1.25, dist = fovH / 2 / Math.tan(cam.fov * Math.PI / 360), cy = .5;
+    cam.aspect = aspect; cam.updateProjectionMatrix();
+    const p = Math.max(-1, Math.min(1, pitch)) * .7;
+    cam.position.set(0, cy + Math.sin(p) * dist, Math.cos(p) * dist); cam.lookAt(0, cy, 0);
+    R.scene.add(I.obj); R.r.render(R.scene, cam); R.scene.remove(I.obj);
+    // 화면 아래 0.125(=발) 위치가 y에 오도록
+    c.drawImage(R.cv, 0, R.h - ph, pw, ph, x - boxW / 2, y - hgt * 1.125, boxW, boxH);
+  }
+  function tick(I) { const now = performance.now(), dt = Math.min(.1, (now - I.last) / 1000); I.last = now; I.mixer.update(dt); }
+
+  // 마을·영웅 화면
+  M.drawLobby = function (c, hero, x, y, hgt, t, bump, view, opt) {
+    const I = inst('lobby:' + hero.id, hero.id); opt = opt || {};
+    const yaw = view ? view.yaw || 0 : 0, pitch = view ? view.pitch || 0 : 0;
+    // 터치 반응: 인사 동작이 있으면 재생, 없으면 대기
+    const react = opt.expr && (opt.expr === 'smile' || opt.expr === 'wink' || opt.expr === 'shy');
+    if (!play(I, react && I.acts.greet ? 'greet' : 'idle')) { // 애니메이션이 없으면 숨쉬기만
+      const br = Math.sin(t * 2.2);
+      I.inner.scale.set(1 + br * .004, 1 + br * .008, 1 + br * .004); I.inner.rotation.z = Math.sin(t * .9) * .012;
+    }
+    tick(I); face(I, opt.expr, t);
+    c.save();
+    c.fillStyle = 'rgba(0,0,0,.25)'; c.beginPath(); c.ellipse(x, y - (bump || 0) * 0, hgt * .14, hgt * .03 + Math.max(0, pitch) * hgt * .03, 0, 0, Math.PI * 2); c.fill();
+    c.imageSmoothingQuality = 'high';
+    blit(c, I, x, y - (bump || 0), hgt, yaw, pitch, .8);
+    c.restore();
+  };
+
+  // 전투: u = 전투 유닛, dir 1 = 오른쪽을 봄
+  M.drawBattle = function (c, hero, x, y, hgt, u, t, dir) {
+    const I = inst(u, hero.id);
+    const role = u.dead ? 'die' : u.hit > .45 ? 'hit' : u.castT > 0 ? 'skill' : u.anim > .15 ? 'attack' : u.walk ? 'walk' : 'idle';
+    const has = play(I, role, role === 'hit' ? .08 : .15);
+    tick(I);
+    c.save(); c.translate(x, y);
+    c.fillStyle = 'rgba(0,0,0,.22)'; c.beginPath(); c.ellipse(0, 0, hgt * .2, hgt * .05, 0, 0, Math.PI * 2); c.fill();
+    // 모델에 그 동작이 없으면 몸 전체를 움직여 흉내
+    let dx = 0, dy = 0, rot = 0;
+    if (!has || !I.acts[role]) {
+      if (role === 'attack') { dx = Math.sin(u.anim * Math.PI) * hgt * .12; rot = .08 * u.anim; }
+      else if (role === 'skill') { dy = -Math.sin(Math.min(1, u.castT / .7) * Math.PI) * hgt * .06; }
+      else if (role === 'hit') { dx = -u.hit * hgt * .06; rot = -.08 * u.hit; }
+      else if (role === 'walk') dy = -Math.abs(Math.sin(t * 9)) * hgt * .025;
+      else if (role === 'die') rot = -(u.dying || 1) * 1.2;
+      else { const br = Math.sin(t * 2.4 + (u.seed || 0)); I.inner.scale.set(1, 1 + br * .01, 1); }
+    }
+    if (u.dead) c.globalAlpha = 1 - (u.dying || 0) * .6;
+    if (role === 'skill') { c.shadowColor = G.CGRADES[hero.g].color; c.shadowBlur = 24; }
+    c.translate(dx * dir, dy); c.rotate(rot * dir);
+    blit(c, I, 0, 0, hgt, dir * 1.05, .12, 1);
+    c.restore(); c.globalAlpha = 1;
   };
 })(window.G);
 </script>
@@ -4523,6 +4732,7 @@ window.G = window.G || {};
       <div class="hd-stage" style="--gc:${G.CGRADES[def.g].color}"><canvas class="main-cv" id="heroCv"></canvas><div class="hd-hint">👆 머리·얼굴·손 등 부위를 터치해 교감 · 끌기: 돌려보기</div>
         <button class="hd-reset" data-a="resetView">정면</button>
         <button class="hd-reset art" data-a="toggleArt">${S.viewArt === false ? '🎨 일러스트' : '🧸 SD 보기'}</button>
+        ${S.viewArt !== false && (G.MODEL_FILES || []).includes(id) ? `<button class="hd-reset d3" data-a="toggle3d">${S.view3d === false ? '🧊 3D 보기' : '🖼️ 그림 보기'}</button>` : ''}
         ${S.viewArt !== false && !String(h.costume).endsWith('_base') && G.ART[id] ? `<button class="hd-cos-note" data-a="wear" data-v="${id}_base">🖼️ 일러스트는 기본 의상만 있어요 · <b>기본 의상 입기</b></button>` : ''}
         ${G.mainHero(S) === id ? '<span class="main-badge">👑 대표</span>' : ''}
         <button class="hd-nav l" data-a="hero" data-v="${ids[(idx - 1 + ids.length) % ids.length]}">◀</button>
@@ -5105,6 +5315,7 @@ window.G = window.G || {};
         <button class="btn block" style="margin-top:10px" data-a="close">닫기</button>`, true);
     },
     setMainClose: id => { G.S.mainHero = id; G.Lobby.mx = .5; G.Lobby.tx = .5; G.save(); UI.close(); UI.render(); UI.toast(`👑 ${G.HERO_MAP[id].name}이(가) 마을 대표가 됐어요`, 'good'); },
+    toggle3d: () => { G.S.view3d = G.S.view3d === false; G.save(); UI.render(); UI.toast(G.S.view3d ? '🧊 3D 모델로 보기' : '🖼️ 그림으로 보기'); },
     toggleArt: () => { G.S.viewArt = G.S.viewArt === false; G.save(); UI.render(); UI.toast(G.S.viewArt ? '🎨 일러스트로 보기' : '🧸 SD 캐릭터로 보기 (자세·회전 가능)'); },
     resetView: () => { UI.dview.yaw = 0; UI.dview.pitch = 0; G.Lobby.resetView(); },
     hero: v => {
