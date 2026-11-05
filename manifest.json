@@ -1,0 +1,10 @@
+{
+  "name": "아스트라 RPG",
+  "short_name": "아스트라",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0f0d1a",
+  "theme_color": "#17142b",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
